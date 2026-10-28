@@ -1,0 +1,19 @@
+{
+  "name": "ai mode to calendar",
+  "description": "Base Level Extension",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    // "default_popup": "hello.html",
+    "default_icon": "Calendar-Download-PNG.png"
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
