@@ -50,9 +50,17 @@ function initChatNavigator() {
     }
 
     messageNodes.forEach((node, index) => {
+      const messageRequestSumup = node.querySelector('h2.iMqumd');
+      if(!messageRequestSumup)return;
+      const messageRequest = messageRequestSumup.parentNode;
+      const messageRequestImgs = messageRequest.querySelectorAll('img')
+      console.log(messageRequestImgs)
+      const messageReplySumup = node.querySelector('h3.iMqumd');
+
+
       const textContainer = node.querySelector('.VndcI')
       const stringContainer = textContainer?.querySelector('span');
-      const text = stringContainer ? stringContainer.innerText.trim() : `訊息 #${index + 1}`;
+      const text = stringContainer ? stringContainer.innerText.trim() : messageRequestSumup ? messageRequestSumup.innerText : `訊息 #${index + 1}`;
 
       // 建立導覽清單項目
       const itemEl = document.createElement("div");
@@ -67,20 +75,51 @@ function initChatNavigator() {
                 cursor: pointer;
                 border-left: 3px solid #555;
                 transition: all 0.2s ease;
+            `;
+
+      // 建立文字容器
+      const tc = document.createElement('div');
+      tc.style.cssText = `
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             `;
-      itemEl.innerText = `#${index + 1}: ${text}`;
+      tc.innerText = `#${index + 1}: ${text}`;
+      itemEl.appendChild(tc);
+
+      // ✅ 修正：用 forEach 遍歷圖片並加入小縮圖預覽列
+      if (messageRequestImgs && messageRequestImgs.length > 0) {
+        const thumbContainer = document.createElement('div');
+        thumbContainer.style.cssText = `
+                    display: flex;
+                    gap: 4px;
+                    margin-top: 6px;
+                    overflow-x: auto;
+                `;
+
+        messageRequestImgs.forEach(img => {
+          const thumb = document.createElement('img');
+          thumb.src = img.src;
+          thumb.style.cssText = `
+                        width: 32px;
+                        height: 32px;
+                        object-fit: cover;
+                        border-radius: 4px;
+                        border: 1px solid #444;
+                    `;
+          thumbContainer.appendChild(thumb);
+        });
+        itemEl.appendChild(thumbContainer);
+      }
 
       // 🎯 核心功能 1：點擊列表項，主對話平滑滾動到該位置
       itemEl.addEventListener("click", () => {
-        node.scrollIntoView({ behavior: "smooth", block: "center" });
+        messageRequest.scrollIntoView({ behavior: "smooth", block: "center" });
 
         // 視覺回饋效果
-        node.style.transition = "background 0.3s";
-        node.style.background = "rgba(0, 255, 135, 0.2)";
-        setTimeout(() => { node.style.background = ""; }, 1000);
+        messageRequest.style.transition = "background 0.3s";
+        messageRequest.style.background = "rgba(0, 255, 135, 0.2)";
+        setTimeout(() => { messageRequest.style.background = ""; }, 1000);
       });
 
       listBody.appendChild(itemEl);
