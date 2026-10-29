@@ -1,0 +1,28 @@
+/* ---------------------------------- */
+/* 1. 整體捲軸寬度與高度 */
+/* ---------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;     /* 縱向捲軸寬度 */
+  height: 8px;    /* 橫向捲軸高度 */
+}
+
+/* ---------------------------------- */
+/* 2. 捲軸軌道 (Background Track) */
+/* ---------------------------------- */
+::-webkit-scrollbar-track {
+  background: #1e1e2f; /* 軌道底色，可改為透明或你喜歡的深色 */
+  border-radius: 4px;
+}
+
+/* ---------------------------------- */
+/* 3. 捲軸滑塊 (Thumb) */
+/* ---------------------------------- */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00ff87, #60efff); /* 漸層酷炫風 */
+  border-radius: 4px;
+}
+
+/* 滑塊滑到或 hover 時的顏色變化 */
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #00b0ff, #00ff87);
+}

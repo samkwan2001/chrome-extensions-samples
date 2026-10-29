@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Custom Scrollbar & AI Assistant",
+  "version": "1.0",
+  "description": "為特定網頁注入自訂捲軸與擴充功能腳本",
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.deepseek.com/*",
+        "https://*.google.com/*"
+      ],
+      "css": [
+        "scrollbar.css"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ]
+}
