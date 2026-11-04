@@ -3,12 +3,15 @@
   "name": "Custom Scrollbar & AI Assistant",
   "version": "1.0",
   "description": "為特定網頁注入自訂捲軸與擴充功能腳本",
-  
+  "action": {
+    "default_popup": "popup.html"
+  },
   "content_scripts": [
     {
       "matches": [
         "https://chat.deepseek.com/*",
-        "https://*.google.com/*"
+        "https://*.google.com/*",
+        "https://*/"
       ],
       "css": [
         "scrollbar.css"

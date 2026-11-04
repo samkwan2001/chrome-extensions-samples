@@ -1,7 +1,11 @@
 // ==========================================
 // 1. 初始化側邊欄 UI 與互動邏輯
 // ==========================================
+console.log("ai-chat-navigator-panel")
+const PanelDefaultDisplay = "flex";
+let isFeatureActivate = false;
 function initChatNavigator() {
+  console.log("ai-chat-navigator-panel")
   if (document.getElementById("ai-chat-navigator-panel")) return;
 
   // 建立導覽側邊欄容器
@@ -18,7 +22,7 @@ function initChatNavigator() {
         border-radius: 12px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.5);
         z-index: 999999;
-        display: flex;
+        display: ${isFeatureActivate ? PanelDefaultDisplay : "none"};
         flex-direction: column;
         font-family: sans-serif;
         overflow: hidden;
@@ -43,7 +47,7 @@ function initChatNavigator() {
 
     // 抓取頁面上的對話訊息節點（請根據你的 DOM 結構調整 Selector）
     const messageNodes = document.querySelectorAll('.CKgc1d');
-
+    console.log(`${messageNodes.length} messageNodes found`)
     if (!messageNodes || messageNodes.length === 0) {
       listBody.innerHTML = `<div style="color: #aaa; text-align: center; padding: 20px;">未偵測到對話內容</div>`;
       return;
@@ -51,7 +55,8 @@ function initChatNavigator() {
 
     messageNodes.forEach((node, index) => {
       const messageRequestSumup = node.querySelector('h2.iMqumd');
-      if(!messageRequestSumup)return;
+      console.log(index, messageRequestSumup, node)
+      if (!messageRequestSumup) return;
       const messageRequest = messageRequestSumup.parentNode;
       const messageRequestImgs = messageRequest.querySelectorAll('img')
       console.log(messageRequestImgs)
@@ -173,6 +178,39 @@ function setupScrollSync(messageNodes) {
 
   messageNodes.forEach(node => observer.observe(node));
 }
+
+
+
+// content_script.js
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "TOGGLE_SWITCH") {
+    const isEnabled = message.value;
+
+    if (isEnabled) {
+      activateFeature();
+    } else {
+      deactivateFeature();
+    }
+  }
+  // Return true if you intend to send an asynchronous response later
+  return true;
+});
+
+function activateFeature() {
+  console.log("Switch turned ON: Executing feature logic...");
+  isFeatureActivate = true;
+  document.getElementById("ai-chat-navigator-panel").style.display = PanelDefaultDisplay;
+}
+
+function deactivateFeature() {
+  console.log("Switch turned OFF: Cleaning up feature logic...");
+  isFeatureActivate = false;
+  document.getElementById("ai-chat-navigator-panel").style.display = "none";
+}
+
+
+
+
 
 // 頁面載入後自動執行
 setTimeout(initChatNavigator, 1500);
