@@ -11,11 +11,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     featureSwitch.addEventListener('change', async (event) => {
         const isEnabled = event.target.checked;
         await chrome.storage.local.set({ featureEnabled: isEnabled });
-        
+
         // 也可以同時發送訊息給當前頁面的 content.js 即時反應
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
         if (tab) {
-            chrome.tabs.sendMessage(tab.id, { action: "TOGGLE_SWITCH", value: isEnabled }).catch(() => {});
+            chrome.tabs.sendMessage(tab.id, { action: "TOGGLE_SWITCH", value: isEnabled }).catch(() => { });
         }
     });
+});
+
+// 1. 處理 Scrollbar 的狀態改變
+document.getElementById('show-scrollbar').addEventListener('change', async (event) => {
+    const selection = event.target.value; // 假設是用 select 或 radio
+
+    // 儲存 Scrollbar 狀態
+    await chrome.storage.local.set({ showScrollbar: selection });
+
+    // 決定 Popup 內的顯示隱藏
+    const mode = (selection === "off" || selection === "show in dom") ? "none" : "";
+    const scrollbarContainer = document.getElementById("scrollbar-container");
+    if (scrollbarContainer) {
+        scrollbarContainer.style.display = mode;
+    }
+});
+
+// 2. 處理 Calendar 的狀態改變（確保變數與 ID 對應正確）
+document.getElementById('show-calendar').addEventListener('change', async (event) => {
+    const selection = event.target.value;
+
+    // 儲存 Calendar 狀態
+    await chrome.storage.local.set({ showCalendar: selection });
+
+    // 決定 Popup 內的顯示隱藏
+    const mode = (selection === "off" || selection === "show in dom") ? "none" : "";
+    const calendarContainer = document.getElementById("calendar-container");
+    if (calendarContainer) {
+        calendarContainer.style.display = mode;
+    }
 });

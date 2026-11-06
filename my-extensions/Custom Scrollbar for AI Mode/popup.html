@@ -1,22 +1,37 @@
-<!-- popup.html -->
 <!DOCTYPE html>
 <html>
 
 <head>
+    <meta charset="utf-8">
     <style>
         body {
             width: 200px;
-            padding: 10px;
+            padding: 12px;
             font-family: sans-serif;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
-    <h3>Extension Settings</h3>
+    <h3>AI 擴充功能選單</h3>
     <label>
         <input type="checkbox" id="feature-switch"> Enable Feature
     </label>
+    <div>自訂捲軸與導覽
+        <seg id="show-scrollbar" selection*3>off|show in popup|show in dom</seg>
+        <iframe src="features/scrollbar.html"></iframe>
+    </div>
+    <div>AI 轉行事曆
+        <seg id="show-calendar" selection*3>off|show in popup|show in dom</seg>
+        <iframe src="features/calendar.html"></iframe>
+    </div>
     <script src="popup.js"></script>
 </body>
 

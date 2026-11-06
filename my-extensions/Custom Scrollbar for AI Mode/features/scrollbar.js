@@ -1,0 +1,238 @@
+// I want to move this to html and use iframe idea
+
+// ==========================================
+// 1. 初始化側邊欄 UI 與互動邏輯
+// ==========================================
+console.log("ai-chat-navigator-panel")
+const PanelDefaultDisplay = "flex";
+let isFeatureActivate = false;
+function initChatNavigator() {
+  console.log("ai-chat-navigator-panel")
+  if (document.getElementById("ai-chat-navigator-panel")) return;
+
+  // 建立導覽側邊欄容器
+  const panel = document.createElement("div");
+  panel.id = "ai-chat-navigator-panel";
+  panel.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 320px;
+        max-height: 85vh;
+        background: #1e1e2f;
+        color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        z-index: 999999;
+        display: ${isFeatureActivate ? PanelDefaultDisplay : "none"};
+        flex-direction: column;
+        font-family: sans-serif;
+        overflow: hidden;
+        border: 1px solid #3d3d5c;
+    `;
+
+  panel.innerHTML = `
+        <div style="padding: 12px 16px; background: #2a2a3c; font-weight: bold; font-size: 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3d3d5c;">
+            <span>🧭 對話導覽與檔案列表</span>
+            <button id="nav-refresh-btn" style="background: #00ff87; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; color: #000;">重新整理</button>
+        </div>
+        <div id="nav-list-body" style="padding: 10px; overflow-y: auto; flex-grow: 1; font-size: 13px;"></div>
+    `;
+
+  document.body.appendChild(panel);
+
+  const listBody = document.getElementById("nav-list-body");
+
+  // 重新整理並建立導覽項目
+  const buildNavigator = () => {
+    listBody.innerHTML = "";
+
+    // 抓取頁面上的對話訊息節點（請根據你的 DOM 結構調整 Selector）
+    const messageNodes = document.querySelectorAll('.CKgc1d');
+    console.log(`${messageNodes.length} messageNodes found`)
+    if (!messageNodes || messageNodes.length === 0) {
+      listBody.innerHTML = `<div style="color: #aaa; text-align: center; padding: 20px;">未偵測到對話內容</div>`;
+      return;
+    }
+
+    messageNodes.forEach((node, index) => {
+      const messageRequestSumup = node.querySelector('h2.iMqumd');
+      console.log(index, messageRequestSumup, node)
+      if (!messageRequestSumup) return;
+      const messageRequest = messageRequestSumup.parentNode;
+      const messageRequestImgs = messageRequest.querySelectorAll('img')
+      console.log(messageRequestImgs)
+      const messageReplySumup = node.querySelector('h3.iMqumd');
+
+
+      const textContainer = node.querySelector('.VndcI')
+      const stringContainer = textContainer?.querySelector('span');
+      const text = stringContainer ? stringContainer.innerText.trim() : messageRequestSumup ? messageRequestSumup.innerText : `訊息 #${index + 1}`;
+
+      // 建立導覽清單項目
+      const itemEl = document.createElement("div");
+      itemEl.className = "nav-item";
+      itemEl.title = text;
+      itemEl.dataset.index = index;
+      itemEl.style.cssText = `
+                background: #252538;
+                margin-bottom: 6px;
+                padding: 8px 10px;
+                border-radius: 6px;
+                cursor: pointer;
+                border-left: 3px solid #555;
+                transition: all 0.2s ease;
+            `;
+
+      // 建立文字容器
+      const tc = document.createElement('div');
+      tc.style.cssText = `
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            `;
+      tc.innerText = `#${index + 1}: ${text}`;
+      itemEl.appendChild(tc);
+
+      // ✅ 修正：用 forEach 遍歷圖片並加入小縮圖預覽列
+      if (messageRequestImgs && messageRequestImgs.length > 0) {
+        const thumbContainer = document.createElement('div');
+        thumbContainer.style.cssText = `
+                    display: flex;
+                    gap: 4px;
+                    margin-top: 6px;
+                    overflow-x: auto;
+                `;
+
+        messageRequestImgs.forEach(img => {
+          const thumb = document.createElement('img');
+          thumb.src = img.src;
+          thumb.style.cssText = `
+                        width: 32px;
+                        height: 32px;
+                        object-fit: cover;
+                        border-radius: 4px;
+                        border: 1px solid #444;
+                    `;
+          thumbContainer.appendChild(thumb);
+        });
+        itemEl.appendChild(thumbContainer);
+      }
+
+      // 🎯 核心功能 1：點擊列表項，主對話平滑滾動到該位置
+      itemEl.addEventListener("click", () => {
+        messageRequest.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // 視覺回饋效果
+        messageRequest.style.transition = "background 0.3s";
+        messageRequest.style.background = "rgba(0, 255, 135, 0.2)";
+        setTimeout(() => { messageRequest.style.background = ""; }, 1000);
+      });
+
+      listBody.appendChild(itemEl);
+    });
+
+    setupScrollSync(messageNodes);
+  };
+
+  buildNavigator();
+  document.getElementById("nav-refresh-btn").addEventListener("click", buildNavigator);
+}
+
+// ==========================================
+// 2. 核心功能 2：滾動主對話時，即時高亮對應項目
+// ==========================================
+function setupScrollSync(messageNodes) {
+  const listBody = document.getElementById("nav-list-body");
+
+  // 使用 IntersectionObserver 監聽主對話各訊息是否進入可視區域
+  const observerOptions = {
+    root: null, // 以視窗或滾動容器為基準
+    threshold: 0.3 // 當元素有 30% 進入視野時觸發
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // 找到當前進入視野的節點索引
+        const index = Array.from(messageNodes).indexOf(entry.target);
+        if (index !== -1) {
+          // 更新側邊欄高亮狀態
+          const navItems = listBody.querySelectorAll('.nav-item');
+          navItems.forEach((item, i) => {
+            if (i === index) {
+              item.style.background = "#2a2a4e";
+              item.style.borderLeftColor = "#00ff87";
+              item.style.color = "#00ff87";
+
+              // 讓側邊欄自動捲動到目前高亮的位置
+              item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            } else {
+              item.style.background = "#252538";
+              item.style.borderLeftColor = "#555";
+              item.style.color = "#ffffff";
+            }
+          });
+        }
+      }
+    });
+  }, observerOptions);
+
+  messageNodes.forEach(node => observer.observe(node));
+}
+
+// A. 頁面載入時，先向 storage 讀取開關狀態並決定是否初始化
+async function checkAndInit() {
+    const data = await chrome.storage.local.get(['featureEnabled']);
+    isFeatureActivate = data.featureEnabled || false;
+    
+    if (isFeatureActivate) {
+        initChatNavigator();
+    }
+}
+
+// B. 監聽來自 popup 的即時訊息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "TOGGLE_SWITCH") {
+    isFeatureActivate = request.value;
+    if (isFeatureActivate) {
+      activateFeature();
+    } else {
+      deactivateFeature();
+    }
+  }
+  // Return true if you intend to send an asynchronous response later
+  return true;
+});
+
+function activateFeature() {
+  const panel = document.getElementById("ai-chat-navigator-panel");
+  console.log("Switch turned ON: Executing feature logic...");
+  isFeatureActivate = true;
+  initChatNavigator(); // 啟動功能
+  panel.style.display = PanelDefaultDisplay;
+}
+
+function deactivateFeature() {
+  const panel = document.getElementById("ai-chat-navigator-panel");
+  console.log("Switch turned OFF: Cleaning up feature logic...");
+  isFeatureActivate = false;
+  panel.style.display = "none";
+}
+
+// C. (選用) 監聽全域 storage 變更，確保多個分頁或 popup 狀態同步
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.featureEnabled) {
+        isFeatureActivate = changes.featureEnabled.newValue;
+        if (isFeatureActivate) {
+            initChatNavigator();
+        } else {
+            const panel = document.getElementById("ai-chat-navigator-panel");
+            if (panel) panel.style.display = "none";
+        }
+    }
+});
+
+
+// 頁面載入後自動執行
+setTimeout(checkAndInit, 1500);

@@ -3,27 +3,28 @@
   "name": "Custom Scrollbar & AI Assistant",
   "version": "1.0",
   "description": "為特定網頁注入自訂捲軸與擴充功能腳本",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
   "action": {
     "default_popup": "popup.html"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://chat.deepseek.com/*",
-        "https://*.google.com/*",
-        "https://*/"
-      ],
-      "css": [
-        "scrollbar.css"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "run_at": "document_end"
+      "matches": ["https://*/*", "http://*/*"],
+      "js": ["content.js"]
     }
   ],
-  "permissions": [
-    "storage",
-    "activeTab"
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "features/scrollbar.html",
+        "features/calendar.html",
+        "features/scrollbar.js",
+        "features/calendar.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
