@@ -179,14 +179,21 @@ function setupScrollSync(messageNodes) {
   messageNodes.forEach(node => observer.observe(node));
 }
 
+// A. 頁面載入時，先向 storage 讀取開關狀態並決定是否初始化
+async function checkAndInit() {
+    const data = await chrome.storage.local.get(['featureEnabled']);
+    isFeatureActivate = data.featureEnabled || false;
+    
+    if (isFeatureActivate) {
+        initChatNavigator();
+    }
+}
 
-
-// content_script.js
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "TOGGLE_SWITCH") {
-    const isEnabled = message.value;
-
-    if (isEnabled) {
+// B. 監聽來自 popup 的即時訊息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "TOGGLE_SWITCH") {
+    isFeatureActivate = request.value;
+    if (isFeatureActivate) {
       activateFeature();
     } else {
       deactivateFeature();
@@ -197,20 +204,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function activateFeature() {
+  const panel = document.getElementById("ai-chat-navigator-panel");
   console.log("Switch turned ON: Executing feature logic...");
   isFeatureActivate = true;
-  document.getElementById("ai-chat-navigator-panel").style.display = PanelDefaultDisplay;
+  initChatNavigator(); // 啟動功能
+  panel.style.display = PanelDefaultDisplay;
 }
 
 function deactivateFeature() {
+  const panel = document.getElementById("ai-chat-navigator-panel");
   console.log("Switch turned OFF: Cleaning up feature logic...");
   isFeatureActivate = false;
-  document.getElementById("ai-chat-navigator-panel").style.display = "none";
+  panel.style.display = "none";
 }
 
-
-
+// C. (選用) 監聽全域 storage 變更，確保多個分頁或 popup 狀態同步
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.featureEnabled) {
+        isFeatureActivate = changes.featureEnabled.newValue;
+        if (isFeatureActivate) {
+            initChatNavigator();
+        } else {
+            const panel = document.getElementById("ai-chat-navigator-panel");
+            if (panel) panel.style.display = "none";
+        }
+    }
+});
 
 
 // 頁面載入後自動執行
-setTimeout(initChatNavigator, 1500);
+setTimeout(checkAndInit, 1500);
